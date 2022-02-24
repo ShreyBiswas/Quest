@@ -1,10 +1,24 @@
+#! TESTING PROGRAM
+# Runs through all possible combinations of 'n' and 'k' under 'bit-size' defined in 'if __name__' section
+# Prints each error case. Uncomment out print(circ) to examine the error circuits.
+
+
 from qiskit import QuantumCircuit,QuantumRegister,ClassicalRegister,execute,Aer
 
 def stringify(k,n,bit_size):
     k_string = format(k,f'0{bit_size}b')
-    n_string = format(n,f'0{bit_size}b')[::-1] # reversed because qiskit's qubits are in reverse order
-    return k_string,n_string
+    n_string = format(n,f'0{bit_size}b')
 
+    return twos_complement(k_string),n_string
+
+def twos_complement(k_string):
+    # twos-complement
+    if '1' not in k_string:
+        return k_string
+
+    power_two = 2**len(k_string) # next highest power of two
+    complement = power_two-int(k_string,2)
+    return format(int(complement),f'0{len(k_string)}b')
 
 def ccOR(circ,a,b,ancilla): #controlled-controlled-OR gate
     circ.barrier()
@@ -31,7 +45,7 @@ def single_qubit_comparison(circ,a,b):
         circ = ccOR(circ,inputs[a],ancillae[a-1],ancillae[a])
     return circ
 
-def comparison(circ,k,n,bit_size):
+def comparison(circ,k_string,bit_size):
 
     for i in range(len(k_string)):
         circ.barrier()
@@ -66,9 +80,10 @@ if __name__ == '__main__':
                 if n_string[i]=='1':
                     circ.x(inputs[i])
 
-            circ = comparison(circ,k,n,bit_size)
+            circ = comparison(circ,k_string,bit_size)
 
             ans = simulate(circ)
-            if n>k != bool(int(ans[0])):
-                print(f'Error: {n,k} returned {ans}.')
-                print(circ)
+
+            if (n>k) != (bool(int(ans[0]))):
+                print(f'Error: n={n} and k={k} produced an output of {ans}.')
+                #print(circ)
